@@ -1,0 +1,2 @@
+FixedTime	StreamSample	leftGain	rightGain	HeadSpeedTrigger	HeadSpeedLowerWindow	HeadSpeedUpperWindow	LookBackWindow state	Right/Wrong	optotypeDirection	optotypeSize	userResponse	Score_saves	Score_goals
+

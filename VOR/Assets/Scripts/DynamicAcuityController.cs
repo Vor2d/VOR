@@ -2,13 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System.Text;
 using System.IO;
 using System.Linq;
-using UnityEngine.XR;
-using System.Threading;
+using System.Net;
+using System.Net.Sockets;
 
 
 public class DynamicAcuityController : MonoBehaviour
@@ -41,6 +40,11 @@ public class DynamicAcuityController : MonoBehaviour
     public VRController vrController;
     public CoilController coilController;
     //System.Diagnostics.Stopwatch fixtimecounter = new System.Diagnostics.Stopwatch();
+    //IP addresses
+    private static readonly byte[] SIM_RZ_byte = new byte[] { 123 };
+    private static readonly IPAddress SIM_RZ_IP =
+                                    new IPAddress(new byte[] { 192, 168, 2, 50 });
+    private const int SIM_RZ_port = 8001;
 
 
 
@@ -67,6 +71,7 @@ public class DynamicAcuityController : MonoBehaviour
     public GameObject blackout;
     public GameObject RecenterPoint;
     public GameObject DecisionMaking;
+    public GameObject WhiteBackGround;
     public SpriteRenderer DR;
     public Text savesText;
     public Text goalsText;
@@ -279,8 +284,9 @@ public class DynamicAcuityController : MonoBehaviour
             this.transform.Rotate(new Vector3(0, 0, 45) * randomKey); // randomly chooses the optotype orientation
         }*/
         //this.transform.Rotate(new Vector3(0, 0, 45) * randomKey);
-        //Debug.Log(randomKey);
-        if (optotypeSize == 0)
+        this.transform.Rotate(new Vector3(0, 0, 90) * (randomKey / 2));
+        Debug.Log(randomKey);
+        /*if (optotypeSize == 0)
         {
             //Debug.Log("zero statement");
             this.transform.Rotate(new Vector3(0, 0, 90) * (randomKey/2));
@@ -289,7 +295,7 @@ public class DynamicAcuityController : MonoBehaviour
         {
             //Debug.Log("Non-zero:" + randomKey);
             this.transform.Rotate(new Vector3(0, 0, 45) * randomKey);
-        }
+        }*/
         directionIndicator = new ArrayList(); // stores direction sign objects which are created and destroyed at runtime
         dot.SetActive(false);
         dot.transform.position = Vector3.zero;
@@ -382,10 +388,21 @@ public class DynamicAcuityController : MonoBehaviour
         savebox.SetActive(false);
         goalbox.SetActive(false);
         DecisionMaking.SetActive(false);
+        WhiteBackGround.SetActive(false);
         recalibrate();
         jumpout = false;
         SavePeak = false;
-        if(optotypeSize == 0)
+        if (randomKey % 2 == 1)
+        {
+            Optotype = Resources.Load<Sprite>("Sprites/Transparant Cs/rotate/" + optotypeSize.ToString());
+            Debug.Log("1");
+        }
+        else
+        {
+            Optotype = Resources.Load<Sprite>("Sprites/Transparant Cs/" + optotypeSize.ToString());
+            Debug.Log("2");
+        }
+        /*if (optotypeSize == 0)
         {
             if(randomKey%2 == 1)
             {
@@ -399,7 +416,7 @@ public class DynamicAcuityController : MonoBehaviour
         else
         {
             Optotype = Resources.Load<Sprite>("Sprites/Transparant Cs/" + optotypeSize.ToString());
-        }
+        }*/
         //Optotype = Resources.Load<Sprite>("Sprites/Transparant Cs/" + optotypeSize.ToString());
         CrowdSource.Play();
         //this.transform.localPosition = new Vector3(0, 0, 0);
@@ -410,15 +427,25 @@ public class DynamicAcuityController : MonoBehaviour
     // FixedUpdate is called once per frame
     void FixedUpdate()
     {
-        Debug.Log("op" + optotypeSize);
+        Debug.Log(Input.GetAxis("Vertical"));
+        //speed.text = dataSource.currentRotation.eulerAngles.y.ToString();
         //Debug.Log(pl.optytpeSizeChoice);
-        //speed.text = background.transform.position.z.ToString();
         //Debug.Log(currentHeadVelocity.y.ToString());
         readTracker();
         //speed.text = currentHeadVelocity.y.ToString();
         if (!optotypeInit)
         {
-            if (optotypeSize == 0)
+            if (randomKey % 2 == 1)
+            {
+                Optotype = Resources.Load<Sprite>("Sprites/Transparant Cs/rotate/" + optotypeSize.ToString());
+                Debug.Log("1");
+            }
+            else
+            {
+                Optotype = Resources.Load<Sprite>("Sprites/Transparant Cs/" + optotypeSize.ToString());
+                Debug.Log("2");
+            }
+            /*if (optotypeSize == 0)
             {
                 if (randomKey % 2 == 1)
                 {
@@ -432,11 +459,11 @@ public class DynamicAcuityController : MonoBehaviour
             else
             {
                 Optotype = Resources.Load<Sprite>("Sprites/Transparant Cs/" + optotypeSize.ToString());
-            }
+            }*/
             //Optotype = Resources.Load<Sprite>("Sprites/Transparant Cs/" + optotypeSize.ToString());
             optotypeInit = true;
         }
-        if( gameMode == EnumTypes.GameMode.Static)
+        if(gameMode == EnumTypes.GameMode.Static)
         {
             blackout.SetActive(false);
         }
@@ -584,6 +611,7 @@ public class DynamicAcuityController : MonoBehaviour
         }
         else if(gameMode == EnumTypes.GameMode.Game)
         {
+            VA.text = "optotypesize:" + optotypeSize.ToString();
             if (!recentered)
             {
                 recenterHeadForNewTrial(headRecenteringThreshold, Vector3.zero, pl.keepHeadSteadyTime);
@@ -955,7 +983,15 @@ public class DynamicAcuityController : MonoBehaviour
     void resetflags()
     {
         rotateBackAndRandom();
-        Optotype = Resources.Load<Sprite>("Sprites/Transparant Cs/" + optotypeSize.ToString());
+        if (randomKey % 2 == 1)
+        {
+            Optotype = Resources.Load<Sprite>("Sprites/Transparant Cs/rotate/" + optotypeSize.ToString());
+        }
+        else
+        {
+            Optotype = Resources.Load<Sprite>("Sprites/Transparant Cs/" + optotypeSize.ToString());
+        }
+        //Optotype = Resources.Load<Sprite>("Sprites/Transparant Cs/" + optotypeSize.ToString());
         responded = true;
         recentered = false;
         needNewTrial = false;
@@ -1027,10 +1063,15 @@ public class DynamicAcuityController : MonoBehaviour
         {
             SpriteR.enabled = true;
             SpriteR.sprite = Optotype;
+            if (!keypressed)
+            {
+                WhiteBackGround.SetActive(true);
+            }
         }
         else if (!status)
         {
             SpriteR.enabled = false;
+            WhiteBackGround.SetActive(false);
         }
 
     }
@@ -1077,13 +1118,18 @@ public class DynamicAcuityController : MonoBehaviour
             // Debug.Log(recentered);
             if (headRotationCheck(headRecenteringThreshold))
             {
-                //Debug.Log("CHECK" + headRotationCheck(headRecenteringThreshold));
+                //Debug.Log("CHECK" + headRotationCheck(headRecenteringThreshold));\
+                if (pl.blackout == 0)
+                {
+                    response.color = Color.red;
+                }
                 response.text = "Hold Still";
                 timer += Time.deltaTime;
                 if(timer > waitingtime)
                 {
                     recentered = true;
                     timer = 0f;
+                    response.color = Color.black;
                 }
                 //StartCoroutine(timer(2));
             }
@@ -1388,12 +1434,12 @@ public class DynamicAcuityController : MonoBehaviour
                 float a = UnityEngine.Random.value;
                 if (a < .5f)
                 {
-                    directionIndicatorDisplayerHelper("left", new Vector3(-0.1f, 0, 0));
+                    directionIndicatorDisplayerHelper("left", new Vector3(0f, 0, 0));
                     //Debug.Log("Left turn!");
                 }
                 else
                 {
-                    directionIndicatorDisplayerHelper("right", new Vector3(0.1f, 0, 0));
+                    directionIndicatorDisplayerHelper("right", new Vector3(0f, 0, 0));
                     //Debug.Log("right turn!");
                 }
                 break;
@@ -2049,7 +2095,10 @@ public class DynamicAcuityController : MonoBehaviour
 	 */
     void rotateBackAndRandom()
     {
-        if(optotypeSize == 0)
+        this.transform.rotation = Quaternion.identity;
+        randomKey = UnityEngine.Random.Range(0, optotypeNumber);
+        this.transform.Rotate(new Vector3(0, 0, 90) * (randomKey / 2));
+        /*if (optotypeSize == 0)
         {
             this.transform.rotation = Quaternion.identity;
             randomKey = UnityEngine.Random.Range(0, optotypeNumber);
@@ -2161,129 +2210,130 @@ public class DynamicAcuityController : MonoBehaviour
 	 */
     void readFromDataSource()
     {
-        // WHY DO WE NEED TO DIVIDE INTO X, Y, AND Z AND THEN RECOMBINE?
-        currentHeadVelocity = dataSource.angularVelocityRead;//new Vector3(dataSource.angularVelocityRead.x, dataSource.angularVelocityRead.y, dataSource.angularVelocityRead.z);
-        currentfixedtime = dataSource.fixedtime;
-        streamSampleAtOptotypeAppearance = dataSource.streamSample;
-        headVelocityHistory.Enqueue(currentHeadVelocity);
-        if (headVelocityHistory.Count > lookbackWindow)
-        {
-            headVelocityHistory.Dequeue();
-        } 
-        pastHeadVelocity = headVelocityHistory.Peek();
-        /*speedLogger.Append(currentHeadVelocity.x + "\t");
-        speedLogger.Append(currentHeadVelocity.y + "\t");
-        speedLogger.Append(currentHeadVelocity.z + "\t");
-        speedLogger.Append(dataSource.fixedtime);
-        speedLogger.AppendLine();*/
-        switch (pl.headDirection)
-        {
-            case 0: // Leftward only
+            // WHY DO WE NEED TO DIVIDE INTO X, Y, AND Z AND THEN RECOMBINE?
+            currentHeadVelocity = dataSource.angularVelocityRead;//new Vector3(dataSource.angularVelocityRead.x, dataSource.angularVelocityRead.y, dataSource.angularVelocityRead.z);
+            currentfixedtime = dataSource.fixedtime;
+            streamSampleAtOptotypeAppearance = dataSource.streamSample;
+            Debug.Log(currentHeadVelocity);
+            headVelocityHistory.Enqueue(currentHeadVelocity);
+            if (headVelocityHistory.Count > lookbackWindow)
+            {
+                headVelocityHistory.Dequeue();
+            }
+            pastHeadVelocity = headVelocityHistory.Peek();
+            /*speedLogger.Append(currentHeadVelocity.x + "\t");
+            speedLogger.Append(currentHeadVelocity.y + "\t");
+            speedLogger.Append(currentHeadVelocity.z + "\t");
+            speedLogger.Append(dataSource.fixedtime);
+            speedLogger.AppendLine();*/
+            switch (pl.headDirection)
+            {
+                case 0: // Leftward only
 
                     headSpeed = Mathf.Abs(currentHeadVelocity.y);
                     lookbackSpeed = Mathf.Abs(pastHeadVelocity.y);
 
-                break;
+                    break;
 
-            case 1: // Rightward only
+                case 1: // Rightward only
 
                     headSpeed = Mathf.Abs(currentHeadVelocity.y);
                     lookbackSpeed = Mathf.Abs(pastHeadVelocity.y);
 
-                break;
+                    break;
 
-            case 2: // Upward only
+                case 2: // Upward only
 
                     headSpeed = Mathf.Abs(currentHeadVelocity.x);
                     lookbackSpeed = Mathf.Abs(pastHeadVelocity.x);
 
-                break;
+                    break;
 
-            case 3: // Downward only
+                case 3: // Downward only
                     headSpeed = Mathf.Abs(currentHeadVelocity.x);
                     lookbackSpeed = Mathf.Abs(pastHeadVelocity.x);
-                break;
+                    break;
 
-            case 4: // Rightward or Leftward
-                headSpeed = Mathf.Abs(currentHeadVelocity.y);
-                lookbackSpeed = Mathf.Abs(pastHeadVelocity.y);
-                break;
+                case 4: // Rightward or Leftward
+                    headSpeed = Mathf.Abs(currentHeadVelocity.y);
+                    lookbackSpeed = Mathf.Abs(pastHeadVelocity.y);
+                    break;
 
-            case 5: // Upward or Downward
-                headSpeed = Mathf.Abs(currentHeadVelocity.x);
-                lookbackSpeed = Mathf.Abs(pastHeadVelocity.x);
-                break;
+                case 5: // Upward or Downward
+                    headSpeed = Mathf.Abs(currentHeadVelocity.x);
+                    lookbackSpeed = Mathf.Abs(pastHeadVelocity.x);
+                    break;
 
-            case 6: // Any direction
-                Vector3 headSpeedTot = new Vector3(currentHeadVelocity.x, currentHeadVelocity.y, 0);
-                headSpeed = headSpeedTot.magnitude;
-                Vector3 lookbackSpeedTot = new Vector3(pastHeadVelocity.x, pastHeadVelocity.y, 0);
-                lookbackSpeed = lookbackSpeedTot.magnitude;
-                break;
+                case 6: // Any direction
+                    Vector3 headSpeedTot = new Vector3(currentHeadVelocity.x, currentHeadVelocity.y, 0);
+                    headSpeed = headSpeedTot.magnitude;
+                    Vector3 lookbackSpeedTot = new Vector3(pastHeadVelocity.x, pastHeadVelocity.y, 0);
+                    lookbackSpeed = lookbackSpeedTot.magnitude;
+                    break;
 
-            case 7: // Random horizontal direction
+                case 7: // Random horizontal direction
 
                     if (directionIndicatorLabel == "left")
                     {
-                            headSpeed = Mathf.Abs(currentHeadVelocity.y);
-                            lookbackSpeed = Mathf.Abs(pastHeadVelocity.y);
+                        headSpeed = Mathf.Abs(currentHeadVelocity.y);
+                        lookbackSpeed = Mathf.Abs(pastHeadVelocity.y);
                     }
                     else
                     {
-                            headSpeed = Mathf.Abs(currentHeadVelocity.y);
-                            lookbackSpeed = Mathf.Abs(pastHeadVelocity.y);
+                        headSpeed = Mathf.Abs(currentHeadVelocity.y);
+                        lookbackSpeed = Mathf.Abs(pastHeadVelocity.y);
                     }
-                break;
+                    break;
 
-            case 8: // Random vertical direction
-                if (directionIndicatorLabel == "up")
-                {
+                case 8: // Random vertical direction
+                    if (directionIndicatorLabel == "up")
+                    {
                         headSpeed = Mathf.Abs(currentHeadVelocity.x);
                         lookbackSpeed = Mathf.Abs(pastHeadVelocity.x);
-                }
-                else
-                {
+                    }
+                    else
+                    {
                         headSpeed = Mathf.Abs(currentHeadVelocity.x);
                         lookbackSpeed = Mathf.Abs(pastHeadVelocity.x);
-                }
-                break;
+                    }
+                    break;
 
-            case 9: // Random any direction
-                if (directionIndicatorLabel == "left")
-                {
+                case 9: // Random any direction
+                    if (directionIndicatorLabel == "left")
+                    {
                         headSpeed = Mathf.Abs(currentHeadVelocity.y);
                         lookbackSpeed = Mathf.Abs(pastHeadVelocity.y);
-                }
-                else if (directionIndicatorLabel == "right")
-                {
+                    }
+                    else if (directionIndicatorLabel == "right")
+                    {
                         headSpeed = Mathf.Abs(currentHeadVelocity.y);
                         lookbackSpeed = Mathf.Abs(pastHeadVelocity.y);
-                }
-                else if (directionIndicatorLabel == "up")
-                {
+                    }
+                    else if (directionIndicatorLabel == "up")
+                    {
                         headSpeed = Mathf.Abs(currentHeadVelocity.x);
                         lookbackSpeed = Mathf.Abs(pastHeadVelocity.x);
-                }
-                else
-                {
+                    }
+                    else
+                    {
                         headSpeed = Mathf.Abs(currentHeadVelocity.x);
                         lookbackSpeed = Mathf.Abs(pastHeadVelocity.x);
-                }
-                break;
-        }
-        // translation on screen stores how many pixels the objects will move per head's angular position
-        // translation along the x-axis depends on rotation about the y-axis
-        // translation along the y-axis depends on rotation about the x-axis
-        float tangentVector = 0;
-        if(dataSource.currentRotation.eulerAngles.y != 0)
-        {
-            tangentVector = -Mathf.Tan(Mathf.Deg2Rad * dataSource.currentRotation.eulerAngles.y);
-        }
-        translationOnScreen = new Vector3(tangentVector, -Mathf.Tan(Mathf.Deg2Rad * dataSource.currentRotation.eulerAngles.x), 0) * pl.patientToScreenDistance * 12 * Screen.dpi * pixels2World;
-        // accelerationComponent = Mathf.Abs(coilController.getAccelerationVector().z);
+                    }
+                    break;
+            }
+            // translation on screen stores how many pixels the objects will move per head's angular position
+            // translation along the x-axis depends on rotation about the y-axis
+            // translation along the y-axis depends on rotation about the x-axis
+            float tangentVector = 0;
+            if (dataSource.currentRotation.eulerAngles.y != 0)
+            {
+                tangentVector = -Mathf.Tan(Mathf.Deg2Rad * dataSource.currentRotation.eulerAngles.y);
+            }
+            translationOnScreen = new Vector3(tangentVector, -Mathf.Tan(Mathf.Deg2Rad * dataSource.currentRotation.eulerAngles.x), 0) * pl.patientToScreenDistance * 12 * Screen.dpi * pixels2World;
+            // accelerationComponent = Mathf.Abs(coilController.getAccelerationVector().z);
 
-        //logs raw data from polhemusController
-        // logRawData(headSpeed.magnitude, accelerationComponent, polhemusController.getRotation());
+            //logs raw data from polhemusController
+            // logRawData(headSpeed.magnitude, accelerationComponent, polhemusController.getRotation())
     }
 
 
@@ -2394,6 +2444,15 @@ public class DynamicAcuityController : MonoBehaviour
         gloves.transform.localPosition = glovesInitPosition;
         canvas.transform.position = new Vector3(recabdot.transform.position.x, recabdot.transform.position.y, recabdot.transform.position.z - 0.2f);
         RecenterPoint.transform.rotation = dataSource.currentRotation;
+        send_udp(SIM_RZ_IP, SIM_RZ_port, SIM_RZ_byte);
+    }
+    public static void send_udp(IPAddress iPAddress, int port, byte[] package)
+    {
+        Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram,
+                                    ProtocolType.Udp);
+        IPEndPoint endPoint = new IPEndPoint(iPAddress, port);
+        socket.SendTo(package, endPoint);
+        socket.Close();
     }
 
     public void logger()

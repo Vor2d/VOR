@@ -88,11 +88,12 @@ public class CoilStream: MonoBehaviour
             Debug.Log("[polhemus] PlStream terminated in PlStream::read_liberty()");
             Console.WriteLine("[polhemus] PlStream terminated in PlStream::read_liberty().");
         }
-        /*finally
+        finally
         {
             udpClient.Close();
+            Debug.Log("Closed");
             udpClient = null;
-        }*/
+        }
     }
 
     private void OnDestroy()
@@ -110,6 +111,7 @@ public class CoilStream: MonoBehaviour
                 if (udpClient != null)
                 {
                     udpClient.Close();
+                    Debug.Log("Closed");
                     udpClient = null;
                 }
             }

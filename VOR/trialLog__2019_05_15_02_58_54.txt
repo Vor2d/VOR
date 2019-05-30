@@ -1,0 +1,8 @@
+FixedTime	StreamSample	leftGain	rightGain	HeadSpeedTrigger	HeadSpeedLowerWindow	HeadSpeedUpperWindow	LookBackWindow state	Right/Wrong	optotypeDirection	optotypeSize	userResponse	Score_saves	Score_goals
+	0	0	0	100	5	100	4	correct	UpLeft	5	UpLeft	1	0	
+	0	0	0	100	5	100	4	correct	UpRight	0	UpRight	2	0	
+	0	0	0	100	5	100	4	correct	DownLeft	0	DownLeft	3	0	
+	0	0	0	100	5	100	4	wrong	Down	0	DownRight	3	1	
+	0	0	0	100	5	100	4	correct	UpLeft	0	UpLeft	4	1	
+	0	0	0	100	5	100	4	correct	DownRight	0	DownRight	5	1	
+
